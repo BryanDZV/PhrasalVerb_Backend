@@ -1,0 +1,27 @@
+# 'services' define los distintos contenedores que forman nuestra app (BD, Backend, Frontend...)
+services:
+  postgres:
+    # 'image' indica de qué "molde" vamos a crear el contenedor.
+    # Si no pones versión, bajará la 'latest', pero es mejor fijar una versión (16) para evitar sorpresas.
+    image: postgres:16
+
+    # 'environment' inyecta variables dentro del contenedor cuando arranca por primera vez.
+    # Postgres usa estas para crear la BD inicial y el superusuario.
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: phrasal_db
+
+    # 'ports' conecta el exterior con el interior.
+    # Izquierda (5432) es el puerto de tu ordenador. Derecha (5432) es el puerto dentro de Docker.
+    ports:
+      - "5432:5432"
+
+    # 'volumes' guarda los datos físicamente en tu ordenador.
+    # Si no pones esto, al apagar el contenedor perderás todos los phrasal verbs que guardes.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+# Aquí declaramos que el volumen 'pgdata' (usado arriba) existe y que Docker debe administrarlo.
+volumes:
+  pgdata:
