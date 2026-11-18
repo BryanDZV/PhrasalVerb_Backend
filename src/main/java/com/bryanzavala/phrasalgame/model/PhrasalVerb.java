@@ -8,23 +8,15 @@ public class PhrasalVerb {
     @Id //lo pongo para marcar quien es la clave primaria
     @GeneratedValue(strategy = GenerationType.IDENTITY)//sirve para genear el id de manera automatica
     @Column(name = "id", nullable = false) //para que no sea nulo
-    private  long id;
+    private  Long id;
     @Column(name="example_sentence",nullable = false,length = 1000)
     private String exampleSentence;
-    @Column(name="verb",nullable = false,length = 100)
+    @Column(name="verb",nullable = false,length = 100, unique = true)
     private String verb;
     @Column(name="translation",nullable = false,length = 1000)
     //column se usa para dar mas control sobre la columna de la base de datos
     //sin ella, spring boot genera la columna con el mismo nombre que la variable
     private String translation;
-
-    public PhrasalVerb getOpposite() {
-        return opposite;
-    }
-
-    public void setOpposite(PhrasalVerb opposite) {
-        this.opposite = opposite;
-    }
 
     //para una accion reflexiva
     @ManyToOne(fetch = FetchType.LAZY)//el fetch type lazy es para que no se cargue la relacion hasta que se necesite
@@ -37,7 +29,15 @@ public class PhrasalVerb {
     public PhrasalVerb() {
     }
 
-    public long getId() {
+    public PhrasalVerb getOpposite() {
+        return opposite;
+    }
+
+    public void setOpposite(PhrasalVerb opposite) {
+        this.opposite = opposite;
+    }
+
+    public Long getId() {
         return id;
     }
 
