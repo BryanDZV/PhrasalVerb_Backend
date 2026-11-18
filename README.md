@@ -53,5 +53,9 @@ API REST que alimenta un juego web de emparejamiento de cartas para aprender phr
 ## ✅ Cómo comprobar que funciona
 En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication in X seconds` sin errores de conexión.
 
+
+## Fase de desarrollo
+1. Creamos Modelos (entidades JPA) y repositorios (interfaces que extienden `JpaRepository`).
+- Se crea el modelo `PhrasalVerb` con sus atributos y relaciones.
 ## 📝 Notas
 - `spring.jpa.hibernate.ddl-auto=update` se usa **solo en desarrollo**. Para producción se plantea usar migraciones versionadas (Flyway o Liquibase).
