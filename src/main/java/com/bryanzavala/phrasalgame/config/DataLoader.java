@@ -10,37 +10,31 @@ import org.springframework.context.annotation.Configuration;
 public class DataLoader {
     //esto sirve para que spring boot ejecute este metodo al iniciar la aplicacion
     @Bean
-    CommandLineRunner cargarDatos(PhrasalVerbRepository repository) {
+    CommandLineRunner loadData(PhrasalVerbRepository repository) {
         return args -> {
             // Dos pares de opuestos.
-            PhrasalVerb putOn = crearSiNoExiste(repository, "put on", "ponerse",
+            PhrasalVerb putOn = createIfNotExists(repository, "put on", "ponerse",
                     "I put on my coat before going outside.");
-            PhrasalVerb takeOff = crearSiNoExiste(repository, "take off", "quitarse",
+            PhrasalVerb takeOff = createIfNotExists(repository, "take off", "quitarse",
                     "He took off his shoes before entering the house.");
-            putOn.setOpposite(takeOff);
-            takeOff.setOpposite(putOn);
-            repository.save(putOn);
-            repository.save(takeOff);
+            linkOpposites(repository, putOn, takeOff);
 
-            PhrasalVerb turnOn = crearSiNoExiste(repository, "turn on", "encender",
+            PhrasalVerb turnOn = createIfNotExists(repository, "turn on", "encender",
                     "Please turn on the light.");
-            PhrasalVerb turnOff = crearSiNoExiste(repository, "turn off", "apagar",
+            PhrasalVerb turnOff = createIfNotExists(repository, "turn off", "apagar",
                     "Please turn off the light when you leave.");
-            turnOn.setOpposite(turnOff);
-            turnOff.setOpposite(turnOn);
-            repository.save(turnOn);
-            repository.save(turnOff);
+            linkOpposites(repository, turnOn, turnOff);
 
             // Dos verbos sueltos, sin relación de opuestos.
-            crearSiNoExiste(repository, "give up", "rendirse",
+            createIfNotExists(repository, "give up", "rendirse",
                     "She decided not to give up.");
-            crearSiNoExiste(repository, "look after", "cuidar",
+            createIfNotExists(repository, "look after", "cuidar",
                     "He looks after his younger sister.");
         };
     }
 
-    private PhrasalVerb crearSiNoExiste(PhrasalVerbRepository repository, String verb,
-                                        String translation, String exampleSentence) {
+    private PhrasalVerb createIfNotExists(PhrasalVerbRepository repository, String verb,
+                                          String translation, String exampleSentence) {
         return repository.findByVerb(verb).orElseGet(() -> {
             PhrasalVerb phrasalVerb = new PhrasalVerb();
             phrasalVerb.setVerb(verb);
@@ -48,5 +42,16 @@ public class DataLoader {
             phrasalVerb.setExampleSentence(exampleSentence);
             return repository.save(phrasalVerb);
         });
+    }
+
+    private void linkOpposites(PhrasalVerbRepository repository, PhrasalVerb verb1, PhrasalVerb verb2) {
+        if (verb1.getOpposite() != null) {
+            return;
+        }
+
+        verb1.setOpposite(verb2);
+        verb2.setOpposite(verb1);
+        repository.save(verb1);
+        repository.save(verb2);
     }
 }
