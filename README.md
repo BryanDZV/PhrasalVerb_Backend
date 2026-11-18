@@ -57,5 +57,9 @@ En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication
 ## Fase de desarrollo
 1. Creamos Modelos (entidades JPA) y repositorios (interfaces que extienden `JpaRepository`).
 - Se crea el modelo `PhrasalVerb` con sus atributos y relaciones.
+2. Creamos el Repository `PhrasalVerbRepository` para acceder a la base de datos.
+   -La tabla phrasal_verb y sus columnas. 
+   -La relación reflexiva opposite_id. 
+   -Datos de prueba con CommandLineRunner.
 ## 📝 Notas
 - `spring.jpa.hibernate.ddl-auto=update` se usa **solo en desarrollo**. Para producción se plantea usar migraciones versionadas (Flyway o Liquibase).
