@@ -18,6 +18,14 @@ public class PhrasalVerb {
     //sin ella, spring boot genera la columna con el mismo nombre que la variable
     private String translation;
 
+    public PhrasalVerb getOpposite() {
+        return opposite;
+    }
+
+    public void setOpposite(PhrasalVerb opposite) {
+        this.opposite = opposite;
+    }
+
     //para una accion reflexiva
     @ManyToOne(fetch = FetchType.LAZY)//el fetch type lazy es para que no se cargue la relacion hasta que se necesite
     @JoinColumn(name="opposite_id",foreignKey = @ForeignKey(name = "fk_opposite_id"))
