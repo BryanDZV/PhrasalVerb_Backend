@@ -93,7 +93,7 @@ En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication
 5. **Controller** `PhrasalVerbController` para exponer los endpoints REST.
    - Creamos el endpoint `GET /api/phrasal-verbs` para obtener todos los phrasal verbs.
 6. **Enum** `GameModel` para definir los 4 modos de juego: opuestos, sinónimos, traducción y huecos.
-   - 
+   - Creamos `GameDto` y `CardDto` para exponer los datos del juego al cliente.DTO anidados a la API.
 
 ## 🔄 Flujo de datos
 
