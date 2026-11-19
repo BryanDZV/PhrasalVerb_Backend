@@ -61,5 +61,30 @@ En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication
    -La tabla phrasal_verb y sus columnas. 
    -La relación reflexiva opposite_id. 
    -Datos de prueba con CommandLineRunner.
+3. Creamos DTO, nos permite crear un objeto con solo los atributos que queremos exponer en la API.
+   -Creamos PhrasalVerbCardDto para exponer solo él, id y el verb.
+   -notas: usamos los Records de Java 21 para crear DTO inmutables y con menos código.
+   -la manera tradicional es creando una clase con atributos privados, constructor, getters y setters.
+4. Creamos el Service `PhrasalVerbService` para encapsular la lógica de negocio.
+   -Implementamos la lógica para convertir las entidades en DTO.
+5. Creamos el Controller `PhrasalVerbController` para exponer los endpoints REST.
+   -Creamos el endpoint GET `/api/phrasal-verbs` para obtener todos los phrasal verbs.
+
+
+
+## Api
+Endpoints disponibles:
+- `GET /api/phrasal-verbs`: Devuelve todos los phrasal verbs
+   -Devuelve:
+   ```json
+[
+{ "id": 1, "verb": "put on" },
+{ "id": 2, "verb": "take off" },
+{ "id": 3, "verb": "turn on" },
+{ "id": 4, "verb": "turn off" },
+{ "id": 5, "verb": "give up" },
+{ "id": 6, "verb": "look after" }
+]
+
 ## 📝 Notas
 - `spring.jpa.hibernate.ddl-auto=update` se usa **solo en desarrollo**. Para producción se plantea usar migraciones versionadas (Flyway o Liquibase).
