@@ -2,9 +2,12 @@ package com.bryanzavala.phrasalgame.service;
 
 import com.bryanzavala.phrasalgame.dto.PhrasalVerbCardDto;
 import com.bryanzavala.phrasalgame.repository.PhrasalVerbRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+//importante le dice que es un servicio, a spring  y lo registra como un bean, para que pueda ser inyectado en otros componentes de la aplicación.
+@Service
 public class PhrasalVerbService {
     //private final hace que la variable repo sea inmutable, no se puede cambiar su valor despues de ser inicializada
     //es el concepto de inyección de dependencias.
