@@ -61,5 +61,8 @@ En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication
    -La tabla phrasal_verb y sus columnas. 
    -La relación reflexiva opposite_id. 
    -Datos de prueba con CommandLineRunner.
+3. Creamos DTO, un concepto un objeto que solo sirve para transportar datos entre capas o por la red, con exactamente los campos que quieres exponer.
+   -Creamos PhrasalVerbCardDto para exponer solo el id y el verb.
+   -
 ## 📝 Notas
 - `spring.jpa.hibernate.ddl-auto=update` se usa **solo en desarrollo**. Para producción se plantea usar migraciones versionadas (Flyway o Liquibase).
