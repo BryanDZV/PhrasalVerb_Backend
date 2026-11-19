@@ -92,6 +92,8 @@ En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication
    - Interfaz y polimorfismo.
 5. **Controller** `PhrasalVerbController` para exponer los endpoints REST.
    - Creamos el endpoint `GET /api/phrasal-verbs` para obtener todos los phrasal verbs.
+6. **Enum** `GameModel` para definir los 4 modos de juego: opuestos, sinónimos, traducción y huecos.
+   - 
 
 ## 🔄 Flujo de datos
 
