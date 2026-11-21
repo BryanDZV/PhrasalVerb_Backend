@@ -94,7 +94,11 @@ En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication
    - Creamos el endpoint `GET /api/phrasal-verbs` para obtener todos los phrasal verbs.
 6. **Enum** `GameModel` para definir los 4 modos de juego: opuestos, sinónimos, traducción y huecos.
    - Creamos `GameDto` y `CardDto` para exponer los datos del juego al cliente.DTO anidados a la API.
-
+7. **Almacén de Partidas** InMemoryGameStore` para guardar las partidas en memoria ram.
+   - Creamos un `Map<String,Map<String,Long>>` para almacenar las partidas, con la clave del juego y un mapa de cartas con su id y él, id del phrasal verb.
+   - Implementamos método save y optional find para recuperar la partida por su id.
+   - CurrentHashMap para concurrencia. En producción se usaría una base de datos.
+   - 
 ## 🔄 Flujo de datos
 
 1. El cliente hace una petición `GET` a la ruta `/api/phrasal-verbs`.
