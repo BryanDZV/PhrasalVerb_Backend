@@ -1,13 +1,13 @@
 # 🃏 Phrasal Verbs Memory Game (Backend API)
 
-API REST que alimenta un juego web de emparejamiento de cartas para aprender phrasal verbs en inglés (nivel B2) con 4 modos de juego: opuestos, sinónimos, traducción y huecos.
+API REST que alimenta un juego web de emparejamiento de cartas para aprender phrasal verbs en inglés (nivel B2). Está pensada para 4 modos de juego (opuestos, sinónimos, traducción y huecos); hoy está implementado el modo de **traducción**.
 
-> **Estado:** en desarrollo. Infraestructura lista; modelo de datos en construcción.
+> **Estado:** en desarrollo. Backend con modelo de datos, creación de partidas y API de cartas. Pendiente: validación de jugadas, resto de modos y frontend.
 
 ## 🛠️ Stack
 
 - Java 21
-- Spring Boot 3.x (Web, Data JPA, Validation, Lombok)
+- Spring Boot 4.1 (Web, Data JPA, Validation, Lombok)
 - PostgreSQL 16
 - Docker y Docker Compose
 - Maven
@@ -27,7 +27,7 @@ API REST que alimenta un juego web de emparejamiento de cartas para aprender phr
    cp .env.example .env
    ```
 
-2. Edita `.env` y rellena tus valores. Descripción de cada variable:
+2. Edita `.env` y rellena tus valores:
 
    | Variable | Descripción |
       |---|---|
@@ -40,7 +40,7 @@ API REST que alimenta un juego web de emparejamiento de cartas para aprender phr
 
 3. Las variables de `.env` deben llegar a Spring como variables de entorno (`application.properties` las lee con `${DB_URL}`, `${DB_USER}`, etc.):
 
-   - **En el IDE:** añade las variables en la configuración de ejecución de la aplicación (en IntelliJ: *Run > Edit Configurations > Environment variables*, o con un plugin como EnvFile apuntando a `.env`).
+   - **En el IDE:** añádelas en la configuración de ejecución de la aplicación (en IntelliJ: *Run > Edit Configurations > Environment variables*, o con un plugin como EnvFile apuntando a `.env`).
    - **Por terminal:** exporta las variables antes de arrancar:
 
      ```bash
@@ -72,102 +72,141 @@ API REST que alimenta un juego web de emparejamiento de cartas para aprender phr
 
 ## ✅ Cómo comprobar que funciona
 
-En la consola debe aparecer un mensaje similar a `Started PhrasalgameApplication in X seconds` sin errores de conexión.
+1. En la consola debe aparecer `Started PhrasalgameApplication in X seconds` sin errores de conexión.
+2. Al arrancar por primera vez se cargan 6 phrasal verbs de ejemplo si la tabla está vacía.
+3. Crea una partida de prueba:
 
-## 🧱 Fase de desarrollo
+   ```bash
+   curl -X POST "http://localhost:8080/api/games?mode=TRANSLATION&pairs=2"
+   ```
 
-1. **Modelos (entidades JPA) y repositorios** (interfaces que extienden `JpaRepository`).
-   - Se crea el modelo `PhrasalVerb` con sus atributos y relaciones.
-2. **Repository** `PhrasalVerbRepository` para acceder a la base de datos.
-   - La tabla `phrasal_verb` y sus columnas.
-   - La relación reflexiva `opposite_id`.
-   - Datos de prueba con `CommandLineRunner`.
-   - Interfaz.
-3. **DTO**: nos permite crear un objeto con solo los atributos que queremos exponer en la API.
-   - Creamos `PhrasalVerbCardDto` para exponer solo el `id` y el `verb`.
-   - Nota: usamos los Records de Java 21 para crear DTO inmutables y con menos código.
-   - La manera tradicional es crear una clase con atributos privados, constructor, getters y setters.
-4. **Service** `PhrasalVerbService` para encapsular la lógica de negocio.
-   - Implementamos la lógica para convertir las entidades en DTO.
-   - Interfaz y polimorfismo.
-5. **Controller** `PhrasalVerbController` para exponer los endpoints REST.
-   - Creamos el endpoint `GET /api/phrasal-verbs` para obtener todos los phrasal verbs.
-6. **Enum** `GameMode` para definir los 4 modos de juego: opuestos, sinónimos, traducción y huecos.
-   - Creamos `GameDto` y `CardDto` para exponer los datos del juego al cliente.DTO anidados a la API.
-7. **Almacén de Partidas** InMemoryGameStore` para guardar las partidas en memoria ram.
-   - Creamos un `Map<String,Map<String,Long>>` para almacenar las partidas, con la clave del juego y un mapa de cartas con su id y él, id del phrasal verb.
-   - Implementamos método save y optional find para recuperar la partida por su id.
-   - CurrentHashMap para concurrencia. En producción se usaría una base de datos.
-   - Singleton para que solo haya una instancia de InMemoryGameStore en la aplicación.
-   - IOC contenedor de Spring Boot que se encarga de crear e inyectar las instancias de las clases.
-## 🔄 Flujo de datos
+   Debe devolver un JSON con un `gameId` y 4 cartas.
 
-1. El cliente hace una petición `GET` a la ruta `/api/phrasal-verbs`.
-2. El controlador `PhrasalVerbController` recibe la petición y llama al método `findAllCards()` del servicio `PhrasalVerbService`.
-3. El servicio `PhrasalVerbService` llama a `repo.findAll()` en el repositorio `PhrasalVerbRepository`.
-4. El repositorio consulta la base de datos (vía JPA/Hibernate) y devuelve las entidades (`List<PhrasalVerb>`) al servicio.
-5. El servicio transforma esas entidades en una lista de `PhrasalVerbCardDto` y se la devuelve al controlador.
-6. El controlador devuelve la lista de `PhrasalVerbCardDto` al cliente en formato JSON.
-7. El cliente recibe la respuesta y muestra los datos en la interfaz de usuario.
+## 🧱 Arquitectura
+
+La aplicación sigue una arquitectura en capas. Cada capa tiene una única responsabilidad:
+
+| Capa | Responsabilidad |
+|---|---|
+| **Controller** | Recibe la petición HTTP, valida los parámetros y delega |
+| **Service** | Lógica de negocio (elegir verbos, crear y mezclar cartas) |
+| **Repository** | Acceso a la base de datos (Spring Data JPA) |
+| **DTO** | Objetos con solo los datos que se exponen al cliente |
+| **Model** | Entidades JPA y tipos del dominio |
+
+```
+src/main/java/com/bryanzavala/phrasalgame/
+├── config/       DataLoader
+├── controller/   PhrasalVerbController, GameController
+├── dto/          PhrasalVerbCardDto, CardDto, GameDto
+├── model/        PhrasalVerb, GameMode
+├── repository/   PhrasalVerbRepository
+└── service/      PhrasalVerbService, GameService, InMemoryGameStore
+```
+
+## 🗄️ Modelo de datos
+
+Tabla `phrasal_verb`:
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | bigint | Clave primaria, generada por la BD |
+| `verb` | varchar(100) | Obligatoria y única |
+| `translation` | varchar(1000) | Obligatoria |
+| `example_sentence` | varchar(1000) | Obligatoria |
+| `opposite_id` | bigint | FK a `phrasal_verb(id)`, opcional (relación reflexiva) |
+
+La relación reflexiva `opposite_id` enlaza cada verbo con su opuesto (por ejemplo, *put on* y *take off*). Es `@ManyToOne` con carga `LAZY`.
+
+## 🔄 Flujo de datos: crear una partida
 
 ```mermaid
 sequenceDiagram
     actor Cliente
-    participant Controller as PhrasalVerbController
-    participant Service as PhrasalVerbService
+    participant Controller as GameController
+    participant Service as GameService
     participant Repo as PhrasalVerbRepository
-    participant DB as Base de Datos
+    participant Store as InMemoryGameStore
 
-    Cliente->>Controller: GET /api/phrasal-verbs
-    Controller->>Service: findAllCards()
+    Cliente->>Controller: POST /api/games?mode=TRANSLATION&pairs=4
+    Controller->>Service: createGame(mode, pairs)
     Service->>Repo: findAll()
-    Repo->>DB: SELECT * FROM phrasal_verb
-    DB-->>Repo: Filas de la tabla
-    Repo-->>Service: Lista de PhrasalVerb (entidades)
-    Note over Service: stream().map(...) a DTO
-    Service-->>Controller: Lista de PhrasalVerbCardDto
-    Controller-->>Cliente: 200 OK (JSON)
+    Repo-->>Service: Lista de PhrasalVerb
+    Note over Service: Baraja, elige N verbos y crea 2 cartas por verbo con UUID
+    Service->>Store: save(gameId, cartaAVerbo)
+    Service-->>Controller: GameDto
+    Controller-->>Cliente: 200 OK (gameId + cartas)
 ```
 
 ## 🌐 API
 
-Endpoints disponibles:
+### `GET /api/phrasal-verbs`
 
-- `GET /api/phrasal-verbs`: devuelve todos los phrasal verbs.
+Devuelve todos los phrasal verbs (solo `id` y `verb`).
 
-  Respuesta:
+```json
+[
+  { "id": 1, "verb": "put on" },
+  { "id": 2, "verb": "take off" }
+]
+```
 
-  ```json
-  [
-    { "id": 1, "verb": "put on" },
-    { "id": 2, "verb": "take off" },
-    { "id": 3, "verb": "turn on" },
-    { "id": 4, "verb": "turn off" },
-    { "id": 5, "verb": "give up" },
-    { "id": 6, "verb": "look after" }
+### `POST /api/games`
+
+Crea una partida con cartas mezcladas e IDs aleatorios.
+
+| Parámetro | Tipo | Obligatorio | Descripción |
+|---|---|---|---|
+| `mode` | `GameMode` | Sí | Modo de juego. Hoy solo `TRANSLATION` |
+| `pairs` | entero ≥ 1 | Sí | Número de parejas. Si supera los verbos disponibles, se usan todos |
+
+Un parámetro ausente o inválido responde `400`.
+
+Ejemplo: `POST /api/games?mode=TRANSLATION&pairs=1`
+
+```json
+{
+  "gameId": "a0e1f3fb-4849-4121-9b06-d01ba8cee5d1",
+  "cards": [
+    { "id": "63e499b2-1a3b-44dc-ba16-4f5a03dfa6b6", "text": "take off" },
+    { "id": "201f056c-071a-4d18-870f-ac994d6aaee8", "text": "quitarse" }
   ]
-  ```
+}
+```
 
-## ⚠️ Problemas encontrados
+## 🧠 Decisiones de diseño
 
-Los DTO complican el uso en relaciones reflexivas: si mapean todos los atributos de la entidad, al encontrar que se relaciona consigo misma se produce una recursión infinita que acaba en `StackOverflowError` o en una respuesta con niveles anidados de más, que no es lo que queremos.
+### DTOs en lugar de entidades
 
-**Solución:** crear un DTO con solo los atributos que queremos exponer, sin exponer la relación reflexiva.
+Devolver la entidad `PhrasalVerb` directamente expondría la traducción y el opuesto (las respuestas del juego), y la relación reflexiva provocaría un bucle infinito al serializar a JSON. Los DTO (`record` de Java) contienen solo lo que el cliente necesita.
 
 ```mermaid
 flowchart LR
-    subgraph Reflexivo ["DTO Reflexivo (Bucle Infinito)"]
-        A1["Carta A: Correr"] -->|relacionada| B1["Carta B: Trotar"]
-        B1 -->|relacionada| A1
+    subgraph Reflexivo ["Serializar la entidad (bucle infinito)"]
+        A1["Carta A"] -->|opposite| B1["Carta B"]
+        B1 -->|opposite| A1
     end
 
-    subgraph Plano ["DTO Plano (200 OK)"]
-        A2["CartaDTO { id: 1, verbo: 'Correr' }"]
+    subgraph Plano ["DTO plano (200 OK)"]
+        A2["CardDto { id, text }"]
     end
 ```
-Las cartas vienen con id consecutivos, cualquiera que entre en network puede verlas y hacer trampa, por eso en el juego web se barajan antes de mostrarlas.
-**Solución:** implementar un mecanismo de barajado antes de devolver las cartas al cliente.
 
-## 📝 Notas
+### IDs temporales para las cartas
 
-- `spring.jpa.hibernate.ddl-auto` controla cómo Hibernate gestiona el esquema de la base de datos (por ejemplo `update` en desarrollo).
+Con los IDs de la BD, las parejas de opuestos tenían IDs consecutivos y cualquiera podía deducirlas desde la pestaña *Network* del navegador. Ahora cada carta lleva un **UUID aleatorio**, las cartas se mezclan, y el servidor guarda en memoria la correspondencia `idCarta → idVerbo` bajo un `gameId`. El cliente nunca recibe esa tabla.
+
+## ⚠️ Limitaciones conocidas
+
+- Las partidas se guardan **en memoria** (`ConcurrentHashMap`): se pierden al reiniciar la aplicación y no caducan.
+- `spring.jpa.hibernate.ddl-auto=update` se usa **solo en desarrollo**. Para producción se plantea usar migraciones versionadas (Flyway o Liquibase).
+
+## 🗺️ Roadmap
+
+- [x] Entidad `PhrasalVerb` con relación reflexiva
+- [x] Repositorio y datos de prueba
+- [x] DTOs y endpoint `GET /api/phrasal-verbs`
+- [x] Creación de partidas con IDs temporales (`POST /api/games`)
+- [ ] Validación de jugadas (`POST` con `gameId` y dos cartas)
+- [ ] Modos Opuestos, Sinónimos y Huecos
+- [ ] Frontend en Next.js
