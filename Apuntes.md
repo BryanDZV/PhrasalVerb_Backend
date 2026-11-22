@@ -11,5 +11,16 @@ Característica,Interfaz (implements),|||Clase Abstracta (extends)
 ¿Obliga a implementar métodos?,Sí (todos los métodos sin cuerpo),||||||Solo los marcados como abstract
 ¿Para qué se usa?,"Definir un contrato (""qué sabe hacer"")",||||||"Compartir código base y datos (""qué es"")"
 
+## GameService
+
+ La idea clave es que son dos listas con propósitos distintos:
+List<PhrasalVerb> verbs = new ArrayList<>(repo.findAll()); // datos de la base de datos
+List<CardDto> cards = new ArrayList<>(); // cartas que vamos creando/
+
+ La idea clave es que son dos listas con propósitos distintos:
+ List<PhrasalVerb> verbs = new ArrayList<>(repo.findAll()); // datos de la base de datos
+ List<CardDto> cards = new ArrayList<>(); // cartas que vamos creando
+
+
 ## Sobrecarga (Overloading)
 Es tener el mismo nombre de método dentro de la misma clase, pero cambiando los parámetros (cantidad o tipo). Por ejemplo: buscar(Long id) y buscar(String verbo). (No confundir con sobrescritura / @Override, que es cuando una hija reescribe un método que heredó del padre manteniendo exactamente la misma firma).
