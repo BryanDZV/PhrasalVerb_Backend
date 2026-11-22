@@ -21,6 +21,20 @@ List<CardDto> cards = new ArrayList<>(); // cartas que vamos creando/
  List<PhrasalVerb> verbs = new ArrayList<>(repo.findAll()); // datos de la base de datos
  List<CardDto> cards = new ArrayList<>(); // cartas que vamos creando
 
-
+## Validated
+Validación en Spring
+- @Min(1) / @NotBlank = la regla. Dice qué valor es válido.
+- @Valid = “revisa este objeto y sus reglas”.
+- @Validated = activa validación de métodos en un bean de Spring, como un servicio. También puede seleccionar grupos de reglas.
+  En un controlador moderno (como el mío con Spring 7):
+  @RequestParam @Min(1) int pairs
+  Spring aplica la regla; no necesito poner @Validated en el controlador.
+  En un servicio, si quiero validar sus parámetros:
+  @Service
+  @Validated
+  class GameService {
+  public void create(@Min(1) int pairs) { ... }
+  }
+  Truco para recordarlo: @Min define la regla; @Valid revisa un objeto; @Validated activa validación de métodos o selecciona grupos.
 ## Sobrecarga (Overloading)
 Es tener el mismo nombre de método dentro de la misma clase, pero cambiando los parámetros (cantidad o tipo). Por ejemplo: buscar(Long id) y buscar(String verbo). (No confundir con sobrescritura / @Override, que es cuando una hija reescribe un método que heredó del padre manteniendo exactamente la misma firma).
