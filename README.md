@@ -1,8 +1,8 @@
-# 🃏 Phrasal Verbs Memory Game (Backend API)
+﻿# 🃏 Phrasal Verbs Memory Game (Backend API)
 
 API REST que alimenta un juego web de emparejamiento de cartas para aprender phrasal verbs en inglés (nivel B2). Está pensada para 4 modos de juego (opuestos, sinónimos, traducción y huecos); hoy está implementado el modo de **traducción**.
 
-> **Estado:** en desarrollo. Backend con modelo de datos, creación de partidas y API de cartas. Pendiente: validación de jugadas, resto de modos y frontend.
+> **Estado:** en desarrollo. Backend con modelo de datos, creación de partidas, API de cartas y CORS para el frontend. Pendiente: validación de jugadas y resto de modos. El frontend está en un repositorio aparte: [phrasal-verbs-frontend](https://github.com/BryanDZV/phrasal-verbs-frontend).
 
 ## 🛠️ Stack
 
@@ -29,12 +29,13 @@ API REST que alimenta un juego web de emparejamiento de cartas para aprender phr
 
 2. Edita `.env` y rellena tus valores:
 
-   | Variable | Descripción |
-      |---|---|
-   | `DB_NAME` | Nombre de la base de datos |
-   | `DB_URL` | URL JDBC (`jdbc:postgresql://localhost:<puerto>/<DB_NAME>`) |
-   | `DB_USER` | Usuario de PostgreSQL |
-   | `DB_PASSWORD` | Contraseña de PostgreSQL |
+   | Variable      | Descripción                                                  |
+   | ------------- | ------------------------------------------------------------ |
+   | `DB_NAME`     | Nombre de la base de datos                                   |
+   | `DB_URL`      | URL JDBC (`jdbc:postgresql://localhost:<puerto>/<DB_NAME>`)  |
+   | `DB_USER`     | Usuario de PostgreSQL                                        |
+   | `DB_PASSWORD` | Contraseña de PostgreSQL                                     |
+   | `CORS_ORIGIN` | Opcional. Origen del frontend autorizado por CORS. Si no se define, se usa `http://localhost:3000` |
 
    El puerto de `DB_URL` debe coincidir con el expuesto en `docker-compose.yml`.
 
@@ -82,21 +83,29 @@ API REST que alimenta un juego web de emparejamiento de cartas para aprender phr
 
    Debe devolver un JSON con un `gameId` y 4 cartas.
 
+4. Comprueba CORS simulando una petición desde el frontend (en PowerShell usa `curl.exe`):
+
+   ```bash
+   curl -i -X POST "http://localhost:8080/api/games?mode=TRANSLATION&pairs=2" -H "Origin: http://localhost:3000"
+   ```
+
+   La respuesta debe incluir la cabecera `Access-Control-Allow-Origin: http://localhost:3000`.
+
 ## 🧱 Arquitectura
 
 La aplicación sigue una arquitectura en capas. Cada capa tiene una única responsabilidad:
 
-| Capa | Responsabilidad |
-|---|---|
-| **Controller** | Recibe la petición HTTP, valida los parámetros y delega |
-| **Service** | Lógica de negocio (elegir verbos, crear y mezclar cartas) |
-| **Repository** | Acceso a la base de datos (Spring Data JPA) |
-| **DTO** | Objetos con solo los datos que se exponen al cliente |
-| **Model** | Entidades JPA y tipos del dominio |
+| Capa           | Responsabilidad                                            |
+| -------------- | ---------------------------------------------------------- |
+| **Controller** | Recibe la petición HTTP, valida los parámetros y delega    |
+| **Service**    | Lógica de negocio (elegir verbos, crear y mezclar cartas)  |
+| **Repository** | Acceso a la base de datos (Spring Data JPA)                |
+| **DTO**        | Objetos con solo los datos que se exponen al cliente       |
+| **Model**      | Entidades JPA y tipos del dominio                          |
 
 ```
 src/main/java/com/bryanzavala/phrasalgame/
-├── config/       DataLoader
+├── config/       DataLoader, CorsConfig
 ├── controller/   PhrasalVerbController, GameController
 ├── dto/          PhrasalVerbCardDto, CardDto, GameDto
 ├── model/        PhrasalVerb, GameMode
@@ -108,13 +117,13 @@ src/main/java/com/bryanzavala/phrasalgame/
 
 Tabla `phrasal_verb`:
 
-| Columna | Tipo | Notas |
-|---|---|---|
-| `id` | bigint | Clave primaria, generada por la BD |
-| `verb` | varchar(100) | Obligatoria y única |
-| `translation` | varchar(1000) | Obligatoria |
-| `example_sentence` | varchar(1000) | Obligatoria |
-| `opposite_id` | bigint | FK a `phrasal_verb(id)`, opcional (relación reflexiva) |
+| Columna            | Tipo          | Notas                                                  |
+| ------------------ | ------------- | ------------------------------------------------------ |
+| `id`               | bigint        | Clave primaria, generada por la BD                     |
+| `verb`             | varchar(100)  | Obligatoria y única                                    |
+| `translation`      | varchar(1000) | Obligatoria                                            |
+| `example_sentence` | varchar(1000) | Obligatoria                                            |
+| `opposite_id`      | bigint        | FK a `phrasal_verb(id)`, opcional (relación reflexiva) |
 
 La relación reflexiva `opposite_id` enlaza cada verbo con su opuesto (por ejemplo, *put on* y *take off*). Es `@ManyToOne` con carga `LAZY`.
 
@@ -135,7 +144,7 @@ sequenceDiagram
     Note over Service: Baraja, elige N verbos y crea 2 cartas por verbo con UUID
     Service->>Store: save(gameId, cartaAVerbo)
     Service-->>Controller: GameDto
-    Controller-->>Cliente: 200 OK (gameId + cartas)
+    Controller-->>Cliente: 201 Created (gameId + cartas)
 ```
 
 ## 🌐 API
@@ -153,12 +162,12 @@ Devuelve todos los phrasal verbs (solo `id` y `verb`).
 
 ### `POST /api/games`
 
-Crea una partida con cartas mezcladas e IDs aleatorios.
+Crea una partida con cartas mezcladas e IDs aleatorios. Responde `201 Created`.
 
-| Parámetro | Tipo | Obligatorio | Descripción |
-|---|---|---|---|
-| `mode` | `GameMode` | Sí | Modo de juego. Hoy solo `TRANSLATION` |
-| `pairs` | entero ≥ 1 | Sí | Número de parejas. Si supera los verbos disponibles, se usan todos |
+| Parámetro | Tipo       | Obligatorio | Descripción                                                        |
+| --------- | ---------- | ----------- | ------------------------------------------------------------------ |
+| `mode`    | `GameMode` | Sí          | Modo de juego. Hoy solo `TRANSLATION`                              |
+| `pairs`   | entero ≥ 1 | Sí          | Número de parejas. Si supera los verbos disponibles, se usan todos |
 
 Un parámetro ausente o inválido responde `400`.
 
@@ -187,7 +196,7 @@ flowchart LR
         B1 -->|opposite| A1
     end
 
-    subgraph Plano ["DTO plano (200 OK)"]
+    subgraph Plano ["DTO plano (201 Created)"]
         A2["CardDto { id, text }"]
     end
 ```
@@ -196,10 +205,24 @@ flowchart LR
 
 Con los IDs de la BD, las parejas de opuestos tenían IDs consecutivos y cualquiera podía deducirlas desde la pestaña *Network* del navegador. Ahora cada carta lleva un **UUID aleatorio**, las cartas se mezclan, y el servidor guarda en memoria la correspondencia `idCarta → idVerbo` bajo un `gameId`. El cliente nunca recibe esa tabla.
 
+### CORS: configuración global y origen por propiedad
+
+El frontend (`localhost:3000`) y la API (`localhost:8080`) son orígenes distintos, así que el navegador solo deja leer las respuestas si la API envía `Access-Control-Allow-Origin`. `CorsConfig` lo configura de forma **global** para `/api/**` (no con `@CrossOrigin` en cada controller), de modo que toda la API queda cubierta con una sola regla. El origen autorizado viene de la propiedad `phrasalgame.cors.allowed-origin`, alimentada por `CORS_ORIGIN` (por defecto `http://localhost:3000`), para poder cambiarlo en producción sin tocar el código. No se usa `*`: solo se autoriza un origen concreto y los métodos `GET` y `POST`.
+
+```mermaid
+sequenceDiagram
+    participant F as Navegador (localhost:3000)
+    participant B as API (localhost:8080)
+    F->>B: POST /api/games (Origin: http://localhost:3000)
+    B-->>F: 201 + Access-Control-Allow-Origin: http://localhost:3000
+    Note over F: El navegador deja leer la respuesta
+```
+
 ## ⚠️ Limitaciones conocidas
 
 - Las partidas se guardan **en memoria** (`ConcurrentHashMap`): se pierden al reiniciar la aplicación y no caducan.
 - `spring.jpa.hibernate.ddl-auto=update` se usa **solo en desarrollo**. Para producción se plantea usar migraciones versionadas (Flyway o Liquibase).
+- CORS autoriza un único origen (`CORS_ORIGIN`).
 
 ## 🗺️ Roadmap
 
@@ -207,6 +230,7 @@ Con los IDs de la BD, las parejas de opuestos tenían IDs consecutivos y cualqui
 - [x] Repositorio y datos de prueba
 - [x] DTOs y endpoint `GET /api/phrasal-verbs`
 - [x] Creación de partidas con IDs temporales (`POST /api/games`)
+- [x] CORS para el frontend
 - [ ] Validación de jugadas (`POST` con `gameId` y dos cartas)
 - [ ] Modos Opuestos, Sinónimos y Huecos
-- [ ] Frontend en Next.js
+- [x] Frontend mínimo en Next.js (repositorio aparte)
