@@ -8,18 +8,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class InMemoryGameStore {
-    //creamos un CurrentHasMap para que varios hilos puedan acceder a la misma memoria y no se genere un error de concurrencia
+    // Almacena los juegos en memoria y permite acceder a ellos desde varios hilos.
+    // Ejemplo: gameId -> (cardId -> verbId)
+   // La clave exterior (gameId) identifica el juego.
+    // La clave interior (cardId) identifica una carta.
+    // El valor (verbId) identifica el phrasal verb.
     private final Map<String,Map<String,Long>> games=new ConcurrentHashMap<>();
-    //este metodo guarda un id de juego
-    // el map guarda un id de carta que es un uuid y el id del verbo que es un long
-    //asi dos cartas son pareja si ambas apuntan al mismo ID de verbo.
+
+    // Guarda un juego usando su ID.
+    // Dos cartas son pareja si tienen el mismo verbId.
+    // Map.copyOf crea una copia que no puede modificarse.
     public void save(String gameId, Map<String, Long> cardToVerb) {
-        //guardamos el juego en memoria, copiando el mapa para evitar que se modifique desde fuera de la clase
-        //inmutabilidad.
         this.games.put(gameId, Map.copyOf(cardToVerb));
     }
-    //método para buscar un juego por su id, y optional para evitar el null pointer exception si no se encuentra el juego
-    //optional es una clase que nos permite manejar valores nulos de manera segura, evitando el uso de null y sus problemas asociados
+
+    // Busca un juego por su ID.
+    // Optional contiene el mapa si existe; si no existe, está vacío.
     public Optional<Map<String,Long>> find(String gameId){
         return Optional.ofNullable(this.games.get(gameId));
     }

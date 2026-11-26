@@ -1,5 +1,6 @@
 package com.bryanzavala.phrasalgame.service;
 
+import com.bryanzavala.phrasalgame.exception.GameNotFoundException;
 import com.bryanzavala.phrasalgame.dto.CardDto;
 import com.bryanzavala.phrasalgame.dto.GameDto;
 import com.bryanzavala.phrasalgame.model.GameMode;
@@ -58,4 +59,10 @@ public class GameService {
 
 
     }
-}
+    public boolean validateMove(String gameId,String firstCardId,String secondCardId) {
+        //obtenemos el juego por el id
+        Optional<Map<String,Long>> game = Optional.of(gameStore.find(gameId).orElseThrow(() -> new GameNotFoundException(gameId)));
+        return true;
+    }
+    }
+
